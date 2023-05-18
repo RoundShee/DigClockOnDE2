@@ -279,4 +279,310 @@ counter4 hour_high(
 
 //日day，和月份，年份有关
 //日月不可为0，均为固定数
+
+//年4位均为十进制，且无限制4-3-2-1
+reg year_4_clkin;
+reg year_4_clrin;
+always @(*) begin
+    if(adjust)
+        begin
+            year_4_clkin <= year_3_rco;     //在下面year_3的实例化引出
+            year_4_clrin <= 0;
+        end
+    else
+        begin
+            year_4_clkin <=add && selectToOther[15];
+            year_4_clrin <= clr && selectToOther[15];
+        end
+end
+wire[3:0] year_4_out;
+always @(*) begin
+    year_h[7:4] <= year_4_out;      //对应高两年的高位
+end
+counter10 year_4(
+    .clk(year_4_clkin),
+    .clr(year_4_clrin),
+    .data(year_4_out),
+    //.rco(year_4_rco)      无需rco，若到一万年，人类还会使用数电吗？
+);
+
+//年3 xOxx
+reg year_3_clkin;
+reg year_3_clrin;
+always @(*) begin
+    if(adjust)
+        begin
+            year_3_clkin <= year_2_rco;     //在下面year_2的实例化引出
+            year_3_clrin <= 0;
+        end
+    else
+        begin
+            year_3_clkin <=add && selectToOther[14];
+            year_3_clrin <= clr && selectToOther[14];
+        end
+end
+wire[3:0] year_3_out;
+wire year_3_rco;
+always @(*) begin
+    year_h[3:0] <= year_3_out;      //对应高两年的低位
+end
+counter10 year_3(
+    .clk(year_3_clkin),
+    .clr(year_3_clrin),
+    .data(year_3_out),
+    .rco(year_3_rco)
+);
+
+//如法炮制年2 xxOx;
+reg year_2_clkin;
+reg year_2_clrin;
+always @(*) begin
+    if(adjust)
+        begin
+            year_2_clkin <= year_1_rco;     //在下面year_1的实例化引出
+            year_2_clrin <= 0;
+        end
+    else
+        begin
+            year_2_clkin <=add && selectToOther[13];
+            year_2_clrin <= clr && selectToOther[13];
+        end
+end
+wire[3:0] year_2_out;
+wire year_2_rco;
+always @(*) begin
+    year_l[7:4] <= year_2_out;      //对应低两年的高位
+end
+counter10 year_2(
+    .clk(year_2_clkin),
+    .clr(year_2_clrin),
+    .data(year_2_out),
+    .rco(year_2_rco)
+);
+
+//过的最快的年 xxxO
+reg year_1_clkin;
+reg year_1_clrin;
+always @(*) begin
+    if(adjust)
+        begin
+            year_1_clkin <= month_high_rco;     //需要月进行实例化引出，而且不是计数器的rco
+            year_1_clrin <= 0;
+        end
+    else
+        begin
+            year_1_clkin <=add && selectToOther[12];
+            year_1_clrin <= clr && selectToOther[12];
+        end
+end
+wire[3:0] year_1_out;
+wire year_1_rco;
+always @(*) begin
+    year_l[3:0] <= year_1_out;      //对应低两年的高位
+end
+counter10 year_1(
+    .clk(year_1_clkin),
+    .clr(year_1_clrin),
+    .data(year_1_out),
+    .rco(year_1_rco)
+);
+
+//月高位只有0、1，为了便利也使用模4计数器
+//月低位可以有0-9，但每次高位清零后必须使计数器变为1，重新使用一个计数器
+//重新定义month_high_rco，与 清零clr_12
+reg clr_12;
+always @(*) begin
+    if((month > 6'b01_0001) && (month_high_clkin || month_low_clkin))
+    begin
+        clr_12 <= 1;
+        month_high_rco <= 1;
+    end
+    else 
+    begin
+        clr_12 <= 0;
+        month_high_rco <= 0;
+    end
+end
+//月高位
+reg month_high_clkin;
+reg month_high_clrin;
+reg month_high_rco;
+always @(*) begin
+    if(adjust)
+        begin
+            month_high_clkin <= month_low_rco;
+            month_high_clrin <= clr_12;           //重定义清零
+        end
+    else
+        begin
+            month_high_clkin <= add && selectToOther[11];
+            month_high_clrin <= (clr && selectToOther[11]) || clr_12;//防止调过
+        end
+end
+wire[1:0] month_high_out;       //月高位使用的模4计数器，但只需要一位即可
+always @(*) begin
+    month[4] <= month_high_out[0];
+end
+counter4 month_high(
+    .clk(month_high_clkin),
+    .clr(month_high_clrin),
+    .data(month_high_out),
+    //.rco(month_high_rco)悬空
+);
+//月低位
+reg month_low_clkin;
+reg month_low_clrin;
+reg month_low_rco;
+always @(*) begin
+    if(adjust)
+        begin
+            month_low_clkin <= day_high_rco;       //同样需要处理
+            month_low_clrin <= clr_12;            //接入重定义的清零
+        end
+    else
+        begin
+            month_low_clkin <= add && selectToOther[10];
+            month_low_clrin <= (clr && selectToOther[10]) || clr_12;//防止调过
+        end
+end
+//wire[3:0] month_low_out;
+//always @(*) begin
+//    month[3:0] <= month_low_out;
+//end
+/*  此处不可再使用封装的计数器
+    需要在接收到clr_12信号时，若高位为1，则清零，若高位为0，则置1
+    根据上面防止调过的初衷，采用异步置数的方式
+counter10 month_low(
+    .clk(month_low_clkin),
+    .clr(month_low_clrin),
+    .data(month_low_out),
+    .rco(month_low_rco)
+);*/
+//重写月低位计数如下
+always @(posedge month_low_clkin, posedge month_low_clrin) begin
+    if (month_low_clrin) begin
+        if(!(month_high_out[0]==0)) begin
+            month[3:0] <= 4'b0000;
+            month_low_rco <= 0;
+            end
+        else begin
+                month[3:0] <= 4'b0001;
+                month_low_rco <= 0;
+            end
+        end
+    else if (month[3:0] == 4'b1001) begin
+        month[3:0] <= 4'b0000;
+        month_low_rco <= 1;     //低位计满，进位清零
+        end
+    else    begin
+        month[3:0] <= month[3:0] + 1;
+        month_low_rco <= 0;
+    end
+end
+
+//31天 1、3、5、7、8、10、12
+//30天 4、6、9、11
+//2月，又与年对应，因此仅仅需要重定义一个约束条件多的clr,与rco
+//由于天数的特殊性，写俩always
+//第一判断处于哪一种状态
+//计数
+reg varDay_clr;
+reg day_high_rco;
+always @(*) begin
+    if (((month == 5'b0_0001) || (month == 5'b0_0011) || (month == 5'b0_0101) || (month == 5'b0_0111) || (month == 5'b0_1000) || (month == 5'b1_0000) || (month == 5'b1_0010))&&(day > 6'b11_0000)) begin
+        varDay_clr <= 1;
+        day_high_rco <= 1;
+    end
+    else if(((month == 5'b0_0100)||(month == 5'b0_0110)||(month == 5'b0_1001)||(month == 5'b1_0001))&&(day > 6'b10_1001)) begin
+        varDay_clr <= 1;
+        day_high_rco <= 1;
+    end//下面是2月润不润问题，紧跟着的是闰月判断if，整百年能整除400 或 非整百年整除4
+    //BCD码不能够判断4整除，需要转二进制-[7:0]BCD转[6:0]_2
+    else if((month == 5'b0_0010)&&(((year_l==8'd0)&&(year_high_BIN[1:0]==2'd0))||((!(year_l==8'd0))&&(year_low_BIN[1:0]==2'd0)))&&(day > 6'b10_1000)) begin
+        varDay_clr <= 1;
+        day_high_rco <= 1;
+    end //仅剩唯一情况2月不润
+    else if((day > 6'b10_0111)) begin
+        varDay_clr <= 1;
+        day_high_rco <= 1;
+    end
+end
+
+//将年高低位进行转换为二进制
+wire[6:0] year_high_BIN;
+wire[6:0] year_low_BIN;
+BCDtoBIN BCDtoBIN_high(
+    .a(year_h),
+    .b(year_high_BIN)
+);
+BCDtoBIN BCDtoBIN_low(
+    .a(year_l),
+    .b(year_low_BIN)
+);
+
+//天 的进位与清零已解决，且不能出现0日的情况，也需要采用 月 处理方式
+//日 高位
+reg day_high_clkin;
+reg day_high_clrin;
+always @(*) begin
+    if(adjust)
+        begin
+            day_high_clkin <= day_low_rco;
+            day_high_clrin <= varDay_clr;           //重定义的清零
+        end
+    else
+        begin
+            day_high_clkin <= add && selectToOther[9];
+            day_high_clrin <= (clr && selectToOther[9]) || varDay_clr;//防止调过
+        end
+end
+wire[1:0] day_high_out;
+always @(*) begin
+    day[5:4] <= day_high_out;
+end
+counter4 day_high(
+    .clk(day_high_clkin),
+    .clr(day_high_clrin),
+    .data(day_high_out),
+    //.rco(day_high_rco)悬空  对应上面重定义
+);
+
+//日低位 与月低位类似，防止出现0日
+//day_low的控制信号
+reg day_low_clkin;
+reg day_low_clrin;
+reg day_low_rco;
+always @(*) begin
+    if(adjust)
+        begin
+            day_low_clkin <= hour_high_rco;       //与212行代码形成闭环
+            day_low_clrin <= varDay_clr;            //接入重定义的清零
+        end
+    else
+        begin
+            day_low_clkin <= add && selectToOther[8];
+            day_low_clrin <= (clr && selectToOther[8]) || varDay_clr;
+        end
+end
+//day_low循环计数
+always @(posedge day_low_clkin, posedge day_low_clrin) begin
+    if (day_low_clrin) begin
+        if(!(day_high_out == 0)) begin
+                day[3:0] <= 4'b0000;
+                day_low_rco <= 0;
+            end
+        else begin
+                day[3:0] <= 4'b0001;
+                day_low_rco <= 0;
+            end
+        end
+    else if (day[3:0] == 4'b1001) begin
+        day[3:0] <= 4'b0000;
+        day_low_rco <= 1;
+        end
+    else    begin
+        day[3:0] <= day[3:0] + 1;
+        day_low_rco <= 0;
+    end
+end
 endmodule

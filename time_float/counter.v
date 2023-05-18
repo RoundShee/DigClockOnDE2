@@ -110,3 +110,13 @@ always@(*)  begin
 end
     
 endmodule
+//两位BCD码转二进制，为年高低位服务
+//99对应为二进制需要至少2^7=128
+module BCDtoBIN (
+    input wire[7:0] a,
+    output reg[6:0] b
+);
+    always @(*) begin
+        b <= a[3:0] + a[7:4];
+    end
+endmodule
