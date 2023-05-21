@@ -7,7 +7,7 @@
 */
 
 module time_float (
-    input clk,add,
+    input CLOCK_50,add,
     input clr,
     input adjust,
     input wire[3:0] select,
@@ -20,6 +20,18 @@ module time_float (
     output reg[7:0] year_l,
     output reg[7:0] year_h
 );
+//毫秒时钟驱动
+reg clk;
+reg[25:0] clk_storage;
+always @(posedge CLOCK_50) begin
+    if(clk_storage > 26'd24_9999) begin
+        clk <= ~clk;
+        clk_storage <= 0;
+    end
+    else clk_storage <= clk_storage + 1;
+end
+
+
 wire[15:0] selectToOther;
 MUX4_16 MUX4_16_1(
     .a(select),
