@@ -510,7 +510,7 @@ always @(*) begin
         day_high_rco <= 1;
     end//下面是2月润不润问题，紧跟着的是闰月判断if，整百年能整除400 或 非整百年整除4
     //BCD码不能够判断4整除，需要转二进制-[7:0]BCD转[6:0]_2
-    else if((month == 5'b0_0010)&&(((year_l==8'd0)&&(year_high_BIN[1:0]==2'd0))||((!(year_l==8'd0))&&(year_low_BIN[1:0]==2'd0)))&&(day > 6'b10_1000)) begin
+    else if((month == 5'b0_0010)&&(((year_l==8'd0)&&(year_high_BIN[1:0]==2'd0))||((!(year_l==8'd0))&&(year_all_BIN[1:0]==2'd0)))&&(day > 6'b10_1000)) begin
         varDay_clr <= 1;
         day_high_rco <= 1;
     end //仅剩唯一情况2月不润
@@ -521,15 +521,18 @@ always @(*) begin
 end
 
 //将年高低位进行转换为二进制
-wire[6:0] year_high_BIN;
-wire[6:0] year_low_BIN;
+//分别对应两个情况：
+//整百年：将高位直接变为二进制输出
+//非整百年：输出全部
+wire[12:0] year_high_BIN;
+wire[12:0] year_all_BIN;
 BCDtoBIN BCDtoBIN_high(
-    .a(year_h),
+    .a({8'd0,year_h}),
     .b(year_high_BIN)
 );
 BCDtoBIN BCDtoBIN_low(
-    .a(year_l),
-    .b(year_low_BIN)
+    .a({year_h,year_l}),
+    .b(year_all_BIN)
 );
 
 //天 的进位与清零已解决，且不能出现0日的情况，也需要采用 月 处理方式

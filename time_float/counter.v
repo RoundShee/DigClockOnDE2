@@ -111,12 +111,13 @@ end
     
 endmodule
 //两位BCD码转二进制，为年高低位服务
-//99对应为二进制需要至少2^7=128
+//_修改——4位全部进行
+//2^13=11192
 module BCDtoBIN (
-    input wire[7:0] a,
-    output reg[6:0] b
+    input wire[15:0] a,
+    output reg[12:0] b
 );
     always @(*) begin
-        b <= a[3:0] + a[7:4];
+        b <= a[3:0] + a[7:4]*10 + a[11:8]*100 + a[15:12]*1000;
     end
 endmodule
