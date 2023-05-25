@@ -5,7 +5,7 @@
 module display_time (
     input CLOCK_50,     //用于计时分别使能两个显示状态切换 年月日 时分秒毫
     input adjust,       //用于判断是否为显示状态还是调时状态
-    input select,       //判断调时状态闪烁哪一位
+    input wire[3:0] select,       //判断调时状态闪烁哪一位
     //将寄存器全部接收用于显示
     input wire[7:0] millisecond,
     input wire[6:0] second,
@@ -36,6 +36,7 @@ reg[3:0]        min_tlow;
 reg[3:0]        min_thigh;
 reg[3:0]        h_tlow;
 reg[3:0]        h_thigh;
+reg[7:0]       en;
 //数码管接入
 //定义中间线
 wire[6:0] HEX0_wire;
@@ -58,41 +59,49 @@ always @(*) begin
 end
 //HEX0 对应年个位 或 毫秒 个位
 HEX_drive to_HEX0(
+    .en(en[0]),
     .a(ms_tlow),
     .b(HEX0_wire)
 );
 //HEX1 对应年的xxOx 或 0.1s
 HEX_drive to_HEX1(
+    .en(en[1]),
     .a(ms_thigh),
     .b(HEX1_wire)
 );
 //HEX2 对应年的xOxx 或1s
 HEX_drive to_HEX2(
+    .en(en[2]),
     .a(s_tlow),
     .b(HEX2_wire)
 );
 //HEX3 对应年的最高位Oxxx 或 10s
 HEX_drive to_HEX3(
+    .en(en[3]),
     .a(s_thigh),
     .b(HEX3_wire)
 );
 //HEX4 对应 日的低位 或 分钟低位
 HEX_drive to_HEX4(
+    .en(en[4]),
     .a(min_tlow),
     .b(HEX4_wire)
 );
 //HEX5 对应 日的高位 或 分钟高位
 HEX_drive to_HEX5(
+    .en(en[5]),
     .a(min_thigh),
     .b(HEX5_wire)
 );
 //HEX6对应 月的低位 或 小时低位
 HEX_drive to_HEX6(
+    .en(en[6]),
     .a(h_tlow),
     .b(HEX6_wire)
 );
 //HEX7对应 月的高位 或 小时高位
 HEX_drive to_HEX7(
+    .en(en[7]),
     .a(h_thigh),
     .b(HEX7_wire)
 );
@@ -114,6 +123,7 @@ MUX4_16 MUX4_16_2(
 
 always @(CLOCK_50) begin    //使用CLOCK_50不断进行刷新判断
     if(adjust) begin
+        en <= 8'b1111_1111;
         if(count_t4 > 28'd100_000000) begin  //月日-年显示
             LEDR <= 2'b10;
             ms_tlow     <= year_l[3:0];
@@ -138,19 +148,7 @@ always @(CLOCK_50) begin    //使用CLOCK_50不断进行刷新判断
         end
     end
     else if(select > 4'd7) begin  //对应月日-年区域 但被select选中需要闪烁
-        if(count_t4[24]) begin  //指示灯亮，被选中的灭
-            LEDR <= 2'b10;
-            ms_tlow     <= year_l[3:0] & ~{selectToOther2[12],selectToOther2[12],selectToOther2[12],selectToOther2[12]};
-            ms_thigh    <= year_l[7:4] & ~{selectToOther2[13],selectToOther2[13],selectToOther2[13],selectToOther2[13]};
-            s_tlow      <= year_h[3:0] & ~{selectToOther2[14],selectToOther2[14],selectToOther2[14],selectToOther2[14]};
-            s_thigh     <= year_h[7:4] & ~{selectToOther2[15],selectToOther2[15],selectToOther2[15],selectToOther2[15]};
-            min_tlow    <= day[3:0] & ~{selectToOther2[8],selectToOther2[8],selectToOther2[8],selectToOther2[8]};
-            min_thigh   <= {1'b0,1'b0,day[5:4]} & ~{selectToOther2[9],selectToOther2[9],selectToOther2[9],selectToOther2[9]};
-            h_tlow      <= month[3:0] & ~{selectToOther2[10],selectToOther2[10],selectToOther2[10],selectToOther2[10]};
-            h_thigh     <= {1'b0,1'b0,1'b0,month[4]} & ~{selectToOther2[11],selectToOther2[11],selectToOther2[11],selectToOther2[11]};
-        end
-        else begin              //指示灯灭，被选中依然显数
-            LEDR <= 2'b00;
+            LEDR <= {count_t4[24],1'b0};
             ms_tlow     <= year_l[3:0];
             ms_thigh    <= year_l[7:4];
             s_tlow      <= year_h[3:0];
@@ -159,22 +157,17 @@ always @(CLOCK_50) begin    //使用CLOCK_50不断进行刷新判断
             min_thigh   <= {1'b0,1'b0,day[5:4]};
             h_tlow      <= month[3:0];
             h_thigh     <= {1'b0,1'b0,1'b0,month[4]};
+            en[0] <= (!selectToOther2[12] || (selectToOther2[12] && count_t4[24]));
+            en[1] <= (!selectToOther2[13] || (selectToOther2[13] && count_t4[24]));
+            en[2] <= (!selectToOther2[14] || (selectToOther2[14] && count_t4[24]));
+            en[3] <= (!selectToOther2[15] || (selectToOther2[15] && count_t4[24]));
+            en[4] <= (!selectToOther2[8] || (selectToOther2[8] && count_t4[24]));
+            en[5] <= (!selectToOther2[9] || (selectToOther2[9] && count_t4[24]));
+            en[6] <= (!selectToOther2[10] || (selectToOther2[10] && count_t4[24]));
+            en[7] <= (!selectToOther2[11] || (selectToOther2[11] && count_t4[24]));
         end
-    end
     else begin              //显示时分秒毫的调时
-        if(count_t4[24]) begin  //指示灯亮，被选中的灭
-            LEDR <= 2'b01 & count_t4[24];
-            ms_tlow     <= millisecond[3:0] & ~{selectToOther2[0],selectToOther2[0],selectToOther2[0],selectToOther2[0]};
-            ms_thigh    <= millisecond[7:4] & ~{selectToOther2[1],selectToOther2[1],selectToOther2[1],selectToOther2[1]};
-            s_tlow      <= second[3:0] & ~{selectToOther2[2],selectToOther2[2],selectToOther2[2],selectToOther2[2]};
-            s_thigh     <= {1'b0, second[6:4]} & ~{selectToOther2[3],selectToOther2[3],selectToOther2[3],selectToOther2[3]};
-            min_tlow    <= minute[3:0] & ~{selectToOther2[4],selectToOther2[4],selectToOther2[4],selectToOther2[4]};
-            min_thigh   <= {1'b0, minute[6:4]} & ~{selectToOther2[5],selectToOther2[5],selectToOther2[5],selectToOther2[5]};
-            h_tlow      <= hour[3:0] & ~{selectToOther2[6],selectToOther2[6],selectToOther2[6],selectToOther2[6]};
-            h_thigh     <= {1'b0,1'b0,hour[5:4]} & ~{selectToOther2[7],selectToOther2[7],selectToOther2[7],selectToOther2[7]};
-        end
-        else begin              //指示灯灭，被选中依然显数
-            LEDR <= 2'b00;
+            LEDR <= {1'b0,count_t4[24]};
             ms_tlow     <= millisecond[3:0];
             ms_thigh    <= millisecond[7:4];
             s_tlow      <= second[3:0];
@@ -183,7 +176,14 @@ always @(CLOCK_50) begin    //使用CLOCK_50不断进行刷新判断
             min_thigh   <= {1'b0, minute[6:4]};
             h_tlow      <= hour[3:0];
             h_thigh     <= {1'b0,1'b0,hour[5:4]};
-        end
+            en[0] <= (!selectToOther2[0] || (selectToOther2[0] && count_t4[24]));
+            en[1] <= (!selectToOther2[1] || (selectToOther2[1] && count_t4[24]));
+            en[2] <= (!selectToOther2[2] || (selectToOther2[2] && count_t4[24]));
+            en[3] <= (!selectToOther2[3] || (selectToOther2[3] && count_t4[24]));
+            en[4] <= (!selectToOther2[4] || (selectToOther2[4] && count_t4[24]));
+            en[5] <= (!selectToOther2[5] || (selectToOther2[5] && count_t4[24]));
+            en[6] <= (!selectToOther2[6] || (selectToOther2[6] && count_t4[24]));
+            en[7] <= (!selectToOther2[7] || (selectToOther2[7] && count_t4[24]));
     end
 end
 
@@ -194,10 +194,12 @@ endmodule
 //共阳极驱动数码管模块
 //则输出低电平为亮，高电平为灭
 module HEX_drive (
+    input en,
     input wire[3:0] a,
     output reg[6:0] b
 );
 always @(*) begin
+    if(en) begin
     case (a)
         4'd0 : b <= 7'b0000001;
         4'd1 : b <= 7'b1001111;
@@ -210,5 +212,7 @@ always @(*) begin
         4'd8 : b <= 7'b0000000;
         4'd9 : b <= 7'b0000100;
     endcase
+    end
+    else b <= 7'b1111111;
 end
 endmodule
