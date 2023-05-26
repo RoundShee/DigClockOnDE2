@@ -27,7 +27,10 @@ always @(posedge CLOCK_50) begin
             state <= 2'b01;
             count <= 0;
         end
-        else count <= 0;
+        else begin
+            count <= 0;
+            state <= 2'b00;
+        end 
     end
     else begin
         count <= count + 1;

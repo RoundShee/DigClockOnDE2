@@ -147,7 +147,8 @@ always @(CLOCK_50) begin    //使用CLOCK_50不断进行刷新判断
             h_thigh     <= {1'b0,1'b0,hour[5:4]};
         end
     end
-    else if(select > 4'd7) begin  //对应月日-年区域 但被select选中需要闪烁
+    else    begin
+         if(select > 4'd7) begin  //对应月日-年区域 但被select选中需要闪烁
             LEDR <= {count_t4[24],1'b0};
             ms_tlow     <= year_l[3:0];
             ms_thigh    <= year_l[7:4];
@@ -184,6 +185,7 @@ always @(CLOCK_50) begin    //使用CLOCK_50不断进行刷新判断
             en[5] <= (!selectToOther2[5] || (selectToOther2[5] && count_t4[24]));
             en[6] <= (!selectToOther2[6] || (selectToOther2[6] && count_t4[24]));
             en[7] <= (!selectToOther2[7] || (selectToOther2[7] && count_t4[24]));
+        end
     end
 end
 
@@ -201,16 +203,16 @@ module HEX_drive (
 always @(*) begin
     if(en) begin
     case (a)
-        4'd0 : b <= 7'b0000001;
-        4'd1 : b <= 7'b1001111;
-        4'd2 : b <= 7'b0010010;
-        4'd3 : b <= 7'b0000110;
-        4'd4 : b <= 7'b1001100;
-        4'd5 : b <= 7'b0100100;
-        4'd6 : b <= 7'b0100000;
-        4'd7 : b <= 7'b0001111;
+        4'd0 : b <= 7'b1000000;
+        4'd1 : b <= 7'b1111001;
+        4'd2 : b <= 7'b0100100;//0010010
+        4'd3 : b <= 7'b0110000;//0000110
+        4'd4 : b <= 7'b0011001;//1001100
+        4'd5 : b <= 7'b0010010;//0100100
+        4'd6 : b <= 7'b0000010;//0100000
+        4'd7 : b <= 7'b1111000;//0001111
         4'd8 : b <= 7'b0000000;
-        4'd9 : b <= 7'b0000100;
+        4'd9 : b <= 7'b0010000;//0000100
     endcase
     end
     else b <= 7'b1111111;

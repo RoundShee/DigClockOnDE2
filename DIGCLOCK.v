@@ -70,6 +70,10 @@ always @(*) begin
     HEX6 <= HEX6_t;
     HEX7 <= HEX7_t;
 end
+wire[1:0] LEDR_wire;
+always @(*) begin
+    LEDR <= LEDR_wire;
+end
 display_time display_time_u(
     .CLOCK_50(CLOCK_50),
     .adjust(adjust),
@@ -89,7 +93,8 @@ display_time display_time_u(
     .HEX4(HEX4_t),
     .HEX5(HEX5_t),
     .HEX6(HEX6_t),
-    .HEX7(HEX7_t)
+    .HEX7(HEX7_t),
+    .LEDR(LEDR_wire)
 );
     
 endmodule

@@ -501,11 +501,11 @@ end
 reg varDay_clr;
 reg day_high_rco;
 always @(*) begin
-    if (((month == 5'b0_0001) || (month == 5'b0_0011) || (month == 5'b0_0101) || (month == 5'b0_0111) || (month == 5'b0_1000) || (month == 5'b1_0000) || (month == 5'b1_0010))&&(day > 6'b11_0000)) begin
+    if (((month == 5'b0_0001) || (month == 5'b0_0011) || (month == 5'b0_0101) || (month == 5'b0_0111) || (month == 5'b0_1000) || (month == 5'b1_0000) || (month == 5'b1_0010))&&(day > 6'b11_0001)) begin
         varDay_clr <= 1;
         day_high_rco <= 1;
     end
-    else if(((month == 5'b0_0100)||(month == 5'b0_0110)||(month == 5'b0_1001)||(month == 5'b1_0001))&&(day > 6'b10_1001)) begin
+    else if(((month == 5'b0_0100)||(month == 5'b0_0110)||(month == 5'b0_1001)||(month == 5'b1_0001))&&(day > 6'b11_0000)) begin
         varDay_clr <= 1;
         day_high_rco <= 1;
     end//下面是2月润不润问题，紧跟着的是闰月判断if，整百年能整除400 或 非整百年整除4
@@ -514,9 +514,13 @@ always @(*) begin
         varDay_clr <= 1;
         day_high_rco <= 1;
     end //仅剩唯一情况2月不润
-    else if((day > 6'b10_0111)) begin
+    else if((month == 5'b0_0010)&&(day > 6'b10_0111)) begin
         varDay_clr <= 1;
         day_high_rco <= 1;
+    end
+    else begin
+        varDay_clr <= 0;
+        day_high_rco <= 0;
     end
 end
 
