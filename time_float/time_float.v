@@ -510,11 +510,11 @@ always @(*) begin
         day_high_rco <= 1;
     end//下面是2月润不润问题，紧跟着的是闰月判断if，整百年能整除400 或 非整百年整除4
     //BCD码不能够判断4整除，需要转二进制-[7:0]BCD转[6:0]_2
-    else if((month == 5'b0_0010)&&(((year_l==8'd0)&&(year_high_BIN[1:0]==2'd0))||((!(year_l==8'd0))&&(year_all_BIN[1:0]==2'd0)))&&(day > 6'b10_1000)) begin
+    else if((month == 5'b0_0010)&&(((year_l==8'd0)&&(year_high_BIN[1:0]==2'd0))||((!(year_l==8'd0))&&(year_all_BIN[1:0]==2'd0)))&&(day > 6'b10_1001)) begin
         varDay_clr <= 1;
         day_high_rco <= 1;
     end //仅剩唯一情况2月不润
-    else if((month == 5'b0_0010)&&(day > 6'b10_0111)) begin
+    else if((month == 5'b0_0010)&&(day > 6'b10_1000)) begin
         varDay_clr <= 1;
         day_high_rco <= 1;
     end

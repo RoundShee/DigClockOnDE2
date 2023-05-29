@@ -1,5 +1,5 @@
 /*
-    一个按键输入，分出两种状态  2s为界
+    一个按键输入，分出两种状态  1s为界
     00没按
     01短按
     10长按
@@ -19,11 +19,11 @@ always @(posedge CLOCK_50) begin
 end
 always @(posedge CLOCK_50) begin
     if(!en) begin
-        if(count > 27'd100_000000) begin    //长按
+        if(count > 27'd50_000000) begin    //长按
             state <= 2'b10;
             count <= 0;
         end
-        else if(count > 27'd1000) begin     //短按
+        else if(count > 27'd1000000) begin     //短按大于20ms,防抖
             state <= 2'b01;
             count <= 0;
         end
