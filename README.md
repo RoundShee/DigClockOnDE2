@@ -13,7 +13,6 @@
 ## key_control说明
     配合button_state将KEY转化为长按和短按，根据按键情况进行输出
 
-* 完成LCD1602的理论开发，准备调试
 
 ## lcd_data_trans说明
     实现将time_float的时间信息转化为LCD1602可识别的数据编码
@@ -21,3 +20,5 @@
 
 ## lcd_drive说明
     根据写操作时序图及命令编写刷新显示，将lcd_data_trans中的数据不断写出
+
+* 2023/6/5 今日测试，已改诸多问题，但仍存在部分week的'y'字母显示'9'；以及time_float中月份不正常

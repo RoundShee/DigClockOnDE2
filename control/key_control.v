@@ -47,16 +47,17 @@ always @(posedge CLOCK_50) begin
             adjust <= 0;//进入调时状态
             select <= 0;//位选择归零
         end
-
-        //*****这一小部分为LCD方面******
         else if(state_0[1]) begin
             adjust_week <= 1;//进入LCD调整状态
         end
         else if(state_0[0]) begin
             bl <= 1;//这是短脉冲
         end
-        else bl <= 0;//背光使能信号复位
-        //*****************************
+        else begin
+            bl <= 0;//背光使能信号复位
+            adjust <= 1;//保持
+            adjust_week <= 0;
+        end 
     end
     else if(adjust&&adjust_week) begin  //LCD调整状态
         if(state_0[0]) begin
@@ -70,7 +71,7 @@ always @(posedge CLOCK_50) begin
             add_week <= 0;//add_week复位
         end
     end
-    else begin  //调时状态
+    else if((adjust==0)&&(!adjust_week)) begin  //调时状态
         if(state_3[0])
             adjust <= 1;//返回走时状态
         else if(state_0[0])

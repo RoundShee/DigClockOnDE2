@@ -70,7 +70,7 @@ end
 //因此如果执行返回光标需要此计数器空余20个数
 reg[11:0] en_count;
 always @(posedge CLOCK_50) begin
-    en_count <= ~en_count;
+    en_count <= en_count + 1;
 end
 
 //输入指令和数据的控制计数器
@@ -78,14 +78,14 @@ end
 //*****下列三段always需要严格对应******
 reg[5:0] command_count;
 always @(posedge en_count[11]) begin
-    if(command_count >6'd56)
+    if(command_count >6'd57)
         command_count <= 0;
     else command_count <= command_count + 1;
 end
 
 //lcd_en驱动
 always @(posedge CLOCK_50) begin    //如果使用负边沿效果是否更好？
-    if(command_count > 6'd35)
+    if(command_count > 6'd36)
         lcd_en <= 0;
     else lcd_en <= en_count[11];
 end
@@ -190,87 +190,94 @@ always @(*) begin
             rw <= 0;
             data <= data_in[127:120];
         end
-        6'd19 :begin     //2-1
+        //将光标移动到第二行
+        6'd19 : begin
+            rs <= 0;
+            rw <= 0;
+            data <= 8'b1100_0000;
+        end
+
+        6'd20 :begin     //2-1
             rs <= 1;
             rw <= 0;
             data <= data_in[135:128];
         end
-        6'd20 :begin     //2-2
+        6'd21 :begin     //2-2
             rs <= 1;
             rw <= 0;
             data <= data_in[143:136];
         end
-        6'd21 :begin     //2-3
+        6'd22 :begin     //2-3
             rs <= 1;
             rw <= 0;
             data <= data_in[151:144];
         end
-        6'd22 :begin     //2-4
+        6'd23 :begin     //2-4
             rs <= 1;
             rw <= 0;
             data <= data_in[159:152];
         end
-        6'd23 :begin     //2-5
+        6'd24 :begin     //2-5
             rs <= 1;
             rw <= 0;
             data <= data_in[167:160];
         end
-        6'd24 :begin     //2-6
+        6'd25 :begin     //2-6
             rs <= 1;
             rw <= 0;
             data <= data_in[175:168];
         end
-        6'd25 :begin     //2-7
+        6'd26 :begin     //2-7
             rs <= 1;
             rw <= 0;
             data <= data_in[183:176];
         end
-        6'd26 :begin     //2-8
+        6'd27 :begin     //2-8
             rs <= 1;
             rw <= 0;
             data <= data_in[191:182];
         end
-        6'd27 :begin     //2-9
+        6'd28 :begin     //2-9
             rs <= 1;
             rw <= 0;
             data <= data_in[199:192];
         end
-        6'd28 :begin     //2-10
+        6'd29 :begin     //2-10
             rs <= 1;
             rw <= 0;
             data <= data_in[207:200];
         end
-        6'd29 :begin     //2-11
+        6'd30 :begin     //2-11
             rs <= 1;
             rw <= 0;
             data <= data_in[215:208];
         end
-        6'd30 :begin     //2-12
+        6'd31 :begin     //2-12
             rs <= 1;
             rw <= 0;
             data <= data_in[223:216];
         end
-        6'd31 :begin     //2-13
+        6'd32 :begin     //2-13
             rs <= 1;
             rw <= 0;
             data <= data_in[231:224];
         end
-        6'd32 :begin     //2-14
+        6'd33 :begin     //2-14
             rs <= 1;
             rw <= 0;
             data <= data_in[239:232];
         end
-        6'd33 :begin     //2-15
+        6'd34 :begin     //2-15
             rs <= 1;
             rw <= 0;
             data <= data_in[247:240];
         end
-        6'd34 :begin     //2-16
+        6'd35 :begin     //2-16
             rs <= 1;
             rw <= 0;
             data <= data_in[255:248];
         end
-        6'd35 :begin     //光标返回
+        6'd36 :begin     //光标返回
             rs <= 0;
             rw <= 0;
             data <= 8'b0000_0010;
