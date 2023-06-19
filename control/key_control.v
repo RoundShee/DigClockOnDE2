@@ -14,7 +14,13 @@ module key_control (
 
     output reg adjust_week, //对LCD星期的控制 高电平调整
     output reg add_week,    //LCD星期加一
-    output reg bl           //LCD背光
+    output reg bl,          //LCD背光
+
+    output reg adjust_alarm,//闹钟调整状态
+    output reg flip_state,  //闹钟开 关
+    output reg select_add,  //闹钟调整 位选择
+    output reg alarm_add,         //选中位加1
+    output reg alarm_clr          //选中位归零
 );
 //状态引出
 wire[1:0] state_0;
@@ -42,13 +48,16 @@ button_state button3(
     .state(state_3)
 );
 always @(posedge CLOCK_50) begin
-    if(adjust&&(!adjust_week)) begin    //走时状态
+    if(adjust&&(!adjust_week)&&(!adjust_alarm)) begin    //走时状态
         if(state_3[1]) begin
             adjust <= 0;//进入调时状态
             select <= 0;//位选择归零
         end
         else if(state_0[1]) begin
-            adjust_week <= 1;//进入LCD调整状态
+            adjust_week <= 1;//进入LCD调整状态-星期
+        end
+        else if(state_1[1]) begin
+            adjust_alarm <= 1;//进入闹钟调整状态
         end
         else if(state_0[0]) begin
             bl <= 1;//这是短脉冲
@@ -57,10 +66,11 @@ always @(posedge CLOCK_50) begin
             bl <= 0;//背光使能信号复位
             adjust <= 1;//保持
             adjust_week <= 0;
+            adjust_alarm <= 0;
         end 
     end
-    else if(adjust&&adjust_week) begin  //LCD调整状态
-        if(state_0[0]) begin
+    else if(adjust&&adjust_week&&(!adjust_alarm)) begin  //LCD调整状态
+        if(state_3[0]) begin
             adjust_week <= 0;//退出LCD调整状态
         end
         else if(state_1[0]) begin
@@ -71,7 +81,7 @@ always @(posedge CLOCK_50) begin
             add_week <= 0;//add_week复位
         end
     end
-    else if((adjust==0)&&(!adjust_week)) begin  //调时状态
+    else if((adjust==0)&&(!adjust_week)&&(!adjust_alarm)) begin  //调时状态
         if(state_3[0])
             adjust <= 1;//返回走时状态
         else if(state_0[0])
@@ -83,6 +93,29 @@ always @(posedge CLOCK_50) begin
         else begin
             clr <= 0;
             add <= 0;
+        end
+    end
+    else if(adjust&&(!adjust_week)&&(adjust_alarm)) begin   //调星期状态
+        if(state_3[0]) begin
+            adjust_alarm <= 0;//退出调星期状态
+        end
+        else if(state_0[1]) begin //长按开启/关闭闹钟
+            flip_state <= 1; //短脉冲
+        end
+        else if(state_0[0]) begin //短按 位选择
+            select_add <= 1;
+        end
+        else if(state_1[0]) begin
+            alarm_add <= 1;
+        end
+        else if(state_2[0]) begin
+            alarm_clr <= 1;
+        end
+        else begin
+            flip_state <= 0;
+            select_add <= 0;
+            alarm_add <= 0;
+            alarm_clr <= 0;
         end
     end
 end

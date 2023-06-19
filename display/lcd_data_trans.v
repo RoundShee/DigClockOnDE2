@@ -16,7 +16,8 @@ module lcd_data_trans (
     input wire[7:0] year_l,
     input wire[7:0] year_h,
 
-    output reg[255:0] data_in,
+    //output reg[255:0] data_in,
+    output reg[199:0] data_in,
     output reg bl_en    //背光输出 对接drive的bl_in
 );
 //LCD1602第一行数据转换
@@ -160,6 +161,7 @@ always @(posedge CLOCK_50) begin
 end //我都觉得 妙 ！！
 
 //剩下得存储问题，目前不预留了，直接为空
+/*
 always @(*) begin
     data_in[207:200] <= 8'b0010_0000;
     data_in[215:208] <= 8'b0010_0000;
@@ -169,4 +171,5 @@ always @(*) begin
     data_in[247:240] <= 8'b0010_0000;
     data_in[255:248] <= 8'b0010_0000;
 end
+*/
 endmodule

@@ -17,7 +17,10 @@ module DIGCLOCK (
     output reg      LCD_EN,
     output reg      LCD_RS,
     output reg      LCD_ON,
-    output reg      LCD_BLON
+    output reg      LCD_BLON,
+
+    output reg[8:0] LEDG,
+    output reg      GPIO_1
 );
 //key_control直接对接DE2，将物理按键等直接映射
 wire add;
@@ -25,16 +28,25 @@ wire clr;
 wire adjust;
 wire[3:0] select;
 wire adjust_week,add_week,bl;   //LCD方面
+wire adjust_alarm,flip_state,select_add,alarm_add,alarm_clr;
 key_control key_control_u(
     .CLOCK_50(CLOCK_50),
     .KEY(KEY),
+
     .add(add),
     .clr(clr),
     .adjust(adjust),
     .select(select),
+
     .adjust_week(adjust_week),
     .add_week(add_week),
-    .bl(bl)
+    .bl(bl),
+
+    .adjust_alarm(adjust_alarm),
+    .flip_state(flip_state),
+    .select_add(select_add),
+    .alarm_add(alarm_add),
+    .alarm_clr(alarm_clr)
 );
 
 //time_float将key_control的输入，配合时钟，输出自己的时间存到寄存器
@@ -123,7 +135,7 @@ lcd_data_trans lcd_data_trans_uti(
     .month(month),
     .year_l(year_l),
     .year_h(year_h),
-    .data_in(data_in),
+    .data_in(data_in[199:0]),
     .bl_en(bl_en)
 );
 //将lcd_drive例化，并且输入数据，引出结果
@@ -153,4 +165,42 @@ lcd_drive lcd_drive_uti(
     .data(lcd_data_wire)
 );
     
+wire beep_wire;
+wire[8:0] ledg_wire;
+wire state_wire;
+wire[3:0] select_one_wire;
+wire[5:0] alarm_hour_wire;
+wire[6:0] alarm_minute_wire;
+Alarm Alarm_uti(
+    .CLOCK_50(CLOCK_50),
+    .adjust_alarm(adjust_alarm),
+    .flip_state(flip_state),
+    .select_add(select_add),
+    .add(alarm_add),
+    .clr(alarm_clr),
+    .second(seconds),
+    .minute(minutes),
+    .hour(hours),
+
+    .beep(beep_wire),
+    .ledg(ledg_wire),
+    .state(state_wire),
+    .select_one(select_one_wire),
+    .alarm_hour(alarm_hour_wire),
+    .alarm_minute(alarm_minute_wire)
+);
+always @(*) begin
+    GPIO_1 <= beep_wire;
+    LEDG <= ledg_wire;
+end
+
+lcd_alarm_trans lcd_alarm_trans_uti(
+    .CLOCK_50(CLOCK_50),
+    .state(state_wire),
+    .select_one(select_one_wire),
+    .alarm_hour(alarm_hour_wire),
+    .alarm_minute(alarm_minute_wire),
+
+    .data_in(data_in[255:200])
+);
 endmodule

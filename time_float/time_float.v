@@ -404,7 +404,7 @@ counter10 year_1(
 //重新定义month_high_rco，与 清零clr_12
 reg clr_12;
 always @(*) begin
-    if((month > 6'b01_0001) && (month_high_clkin || month_low_clkin))
+    if((month > 5'b1_0001) && (month_high_clkin || month_low_clkin))
     begin
         clr_12 <= 1;
         month_high_rco <= 1;
@@ -470,7 +470,10 @@ counter10 month_low(
     .data(month_low_out),
     .rco(month_low_rco)
 );*/
+
+
 //重写月低位计数如下
+
 always @(posedge month_low_clkin, posedge month_low_clrin) begin
     if (month_low_clrin) begin
         if(!(month_high_out[0]==0)) begin
@@ -491,6 +494,28 @@ always @(posedge month_low_clkin, posedge month_low_clrin) begin
         month_low_rco <= 0;
     end
 end
+
+/*
+//以上多次综合结果不同，将多if直接进行选择，不嵌套
+always @(posedge month_low_clkin, posedge month_low_clrin) begin
+    if ((month_low_clrin)&&(!(month_high_out[0]==0))) begin
+        month[3:0] <= 4'b0000;  //清零信号下 高位为1，归0
+        month_low_rco <= 0;
+    end
+    else if((month_low_clrin)&&((month_high_out[0]==0))) begin
+        month[3:0] <= 4'b0001;  //清零信号下 高位为0，归1
+        month_low_rco <= 0;
+    end
+    else if ((!(month_low_clrin))&&(month[3:0] == 4'b1001)) begin
+        month[3:0] <= 4'b0000;
+        month_low_rco <= 1;     //低位计满，进位清零
+    end
+    else begin
+        month[3:0] <= month[3:0] + 1;
+        month_low_rco <= 0;
+    end
+end
+*/
 
 //31天 1、3、5、7、8、10、12
 //30天 4、6、9、11
@@ -584,6 +609,7 @@ always @(*) begin
         end
 end
 //day_low循环计数
+
 always @(posedge day_low_clkin, posedge day_low_clrin) begin
     if (day_low_clrin) begin
         if(!(day_high_out == 0)) begin
@@ -604,4 +630,26 @@ always @(posedge day_low_clkin, posedge day_low_clrin) begin
         day_low_rco <= 0;
     end
 end
+
+/*
+//同样改为不嵌套if
+always @(posedge day_low_clkin, posedge day_low_clrin) begin
+    if ((day_low_clrin)&&(!(day_high_out == 0))) begin
+        day[3:0] <= 4'b0000;    //清零信号下 高位不为0 置0
+        day_low_rco <= 0;
+        end
+    else if((day_low_clrin)&&(day_high_out == 0)) begin
+        day[3:0] <= 4'b0001;    //清零信号下 高位为0 置1
+        day_low_rco <= 0;
+        end
+    else if((!(day_low_clrin))&&(day[3:0] == 4'b1001)) begin
+        day[3:0] <= 4'b0000;
+        day_low_rco <= 1;
+        end
+    else begin
+        day[3:0] <= day[3:0] + 1;
+        day_low_rco <= 0;
+    end
+end
+*/
 endmodule
