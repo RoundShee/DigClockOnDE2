@@ -128,7 +128,7 @@ end
 //蜂鸣器部分
 always @(*) begin
     if((alarm_hour==hour)&&(alarm_minute==minute)&&state) begin
-        beep <= count_breath[22]&&count_breath[24];
+        beep <= count_breath[20] || count_breath[23];
     end
     else begin
         beep <= 1;

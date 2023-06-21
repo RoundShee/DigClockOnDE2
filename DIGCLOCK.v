@@ -20,7 +20,7 @@ module DIGCLOCK (
     output reg      LCD_BLON,
 
     output reg[8:0] LEDG,
-    output reg      GPIO_1
+    output reg[2:0] GPIO_1
 );
 //key_control直接对接DE2，将物理按键等直接映射
 wire add;
@@ -190,7 +190,7 @@ Alarm Alarm_uti(
     .alarm_minute(alarm_minute_wire)
 );
 always @(*) begin
-    GPIO_1 <= beep_wire;
+    GPIO_1 <= {1'b1, beep_wire, 1'b0};
     LEDG <= ledg_wire;
 end
 

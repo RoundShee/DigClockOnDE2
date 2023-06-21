@@ -403,7 +403,7 @@ counter10 year_1(
 //月低位可以有0-9，但每次高位清零后必须使计数器变为1，重新使用一个计数器
 //重新定义month_high_rco，与 清零clr_12
 reg clr_12;
-always @(*) begin
+always @(posedge CLOCK_50) begin
     if((month > 5'b1_0001) && (month_high_clkin || month_low_clkin))
     begin
         clr_12 <= 1;
@@ -476,7 +476,7 @@ counter10 month_low(
 
 always @(posedge month_low_clkin, posedge month_low_clrin) begin
     if (month_low_clrin) begin
-        if(!(month_high_out[0]==0)) begin
+        if(month_high_out[0]) begin
             month[3:0] <= 4'b0000;
             month_low_rco <= 0;
             end
@@ -525,7 +525,7 @@ end
 //计数
 reg varDay_clr;
 reg day_high_rco;
-always @(*) begin
+always @(posedge CLOCK_50) begin
     if (((month == 5'b0_0001) || (month == 5'b0_0011) || (month == 5'b0_0101) || (month == 5'b0_0111) || (month == 5'b0_1000) || (month == 5'b1_0000) || (month == 5'b1_0010))&&(day > 6'b11_0001)) begin
         varDay_clr <= 1;
         day_high_rco <= 1;

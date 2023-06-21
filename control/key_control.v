@@ -86,8 +86,11 @@ always @(posedge CLOCK_50) begin
             adjust <= 1;//返回走时状态
         else if(state_0[0])
             select <= select + 1;
-        else if(state_2[0])
+        else if(state_2[1])
             clr <= 1;
+        else if(state_2[0]) begin
+            select <= select - 1;
+        end
         else if(state_1[0])
             add <= 1;
         else begin
